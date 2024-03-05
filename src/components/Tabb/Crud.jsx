@@ -1,8 +1,8 @@
 import {
-  createNewUserAPI,
-  deleteUserAPI,
-  getUserAPI,
-  updateUserAPI,
+  clientCreateAPI,
+  clientDeleteAPI,
+  clientUpdateAPI,
+  clientsGetAPI,
 } from "../../services/service";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (user) => {
-      const response = await createNewUserAPI(user);
+      const response = await clientCreateAPI(user);
       console.log("New User Added:", response);
     },
 
@@ -37,7 +37,7 @@ export function useGetUsers() {
     queryKey: ["users"],
     queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      const response = await getUserAPI();
+      const response = await clientsGetAPI();
       console.log(response);
       const userData = response.posts;
       console.log(userData);
@@ -52,7 +52,7 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (user, sdf) => {
-      const response = await updateUserAPI(user);
+      const response = await clientUpdateAPI(user);
       console.log("Update user", response);
     },
 
@@ -71,7 +71,7 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId) => {
-      await deleteUserAPI(userId);
+      await clientDeleteAPI(userId);
     },
 
     onMutate: async (userId) => {

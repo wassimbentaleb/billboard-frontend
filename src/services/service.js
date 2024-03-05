@@ -10,24 +10,24 @@ const signupAPI = async (paylaod) =>{
     return data;
   }
 
-  const createNewUserAPI = async (user) =>{
-    const {data} = await api.post("/newuser", user);
+  const clientCreateAPI = async (user) =>{
+    const {data} = await api.post("/clientCreate", user);
     return data;
   }
 
-  const deleteUserAPI = async (id) =>{
-    const {data} = await api.delete("/newuser/"+id);
+  const clientDeleteAPI = async (id) =>{
+    const {data} = await api.delete("/clientDelete/"+id);
     return data;
   }
 
-  const updateUserAPI = async (user) =>{
-    const {data} = await api.put("/newuser/"+user.ID, user);
+  const clientUpdateAPI = async (user) =>{
+    const {data} = await api.put("/clientUpdate/"+user.ID, user);
     return data;
   }
 
-  const getUserAPI = async (user) =>{
-    const {data} = await api.get("/newuser", user);
+  const clientsGetAPI = async (user) =>{
+    const {data} = await api.get("/clientsGet", user);
     return data;
   }
 
-  export { signupAPI,signinAPI,createNewUserAPI,deleteUserAPI,updateUserAPI,getUserAPI };
+  export { signupAPI,signinAPI,clientsGetAPI,clientDeleteAPI,clientCreateAPI,clientUpdateAPI };
