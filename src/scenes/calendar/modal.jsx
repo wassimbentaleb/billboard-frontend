@@ -1,34 +1,95 @@
 import React, { useState } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import {
-  Typography,
-  TextField,
-  Box,
-  Card,
-  Button,
-
-} from "@mui/material";
+import { Typography, TextField, Box, Card, Button ,CardMedia} from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
 //import Card from '@mui/material/Card';
 //import CardContent from '@mui/material/CardContent';
 
 // Define a type for the form data
 
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
+import api from "../../api/api";
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
   height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
+  overflow: "hidden",
+  position: "absolute",
   bottom: 0,
   left: 0,
-  whiteSpace: 'nowrap',
+  whiteSpace: "nowrap",
   width: 1,
 });
 
 const ImageUpload = (props) => {
+  const [files, setFiles] = useState(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [progress, setProgress] = useState({ stared: false, pc: 0 });
+  const [msg, setMsg] = useState(null);
   const [imagePreview, setImagePreview] = useState();
+
+  const handleNameChange = (e) => {
+    setName(e.target.value);
+  };
+
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    console.log(name, description);
+  };
+
+  // Function to handle image preview
+  const handleImageChangee = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImageChange = (e) => {
+    console.log(e.target.files);
+    setImagePreview(URL.createObjectURL(e.target.files[0]));
+  };
+
+  const handleUpload = async () => {
+    if (!files) {
+      setMsg("No file selected");
+      return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files", files[i]);
+    }
+
+    setMsg("Uploading...");
+    setProgress((prevState) => {
+      return { ...prevState, stared: true };
+    });
+    await api
+      .post("/handleFileUpload", formData, {
+        onUploadProgress: (ProgressEvent) => {
+          setProgress((prevState) => {
+            return { ...prevState, pc: ProgressEvent.progress * 100 };
+          });
+        },
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => {
+        setMsg("Upload successfull");
+        console.log(res);
+      })
+      .catch((err) => {
+        setMsg("Upload failed");
+        console.error(err);
+      });
+  };
+
+  /* const [imagePreview, setImagePreview] = useState();
   const {
     control,
     handleSubmit,
@@ -59,11 +120,12 @@ const ImageUpload = (props) => {
       /* const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml'];
       if (!allowedTypes.includes(file.type)) {
         return 'Invalid file type. Please select an image (jpeg, png, gif, svg, jpg).';
-      }*/
+      }
       return true;
     },
   };
-
+   onSubmit={handleSubmit(onSubmit)}
+*/
   return (
     <Card
       sx={{
@@ -73,7 +135,7 @@ const ImageUpload = (props) => {
         justifyContent: "center",
       }}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <Typography
           sx={{ margin: "20px", textAlign: "center" }}
           variant="h5"
@@ -97,16 +159,26 @@ const ImageUpload = (props) => {
           multiline
         />
 
-        <Box sx={{ display: "flex", justifyContent: "center" ,margin:"20px"}}>
+        <Box sx={{ display: "flex", justifyContent: "center", margin: "20px" }}>
           <Button
             variant="contained"
             color="primary"
             startIcon={<CloudUploadIcon />}
             component="label"
+            onChange={handleImageChange}
           >
             Upload image
-            <VisuallyHiddenInput type="file" />
+            <VisuallyHiddenInput type="file" multiple />
           </Button>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "center",  }}>
+        {imagePreview && (
+          <Box sx={{ my: 2 }}>
+            <Card  sx={{ maxWidth:80,maxHeight:80 }}>
+              <CardMedia component="img" image={imagePreview} alt="Preview" />
+            </Card>
+          </Box>
+        )}
         </Box>
 
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -115,6 +187,7 @@ const ImageUpload = (props) => {
               sx={{ m: 1, width: 120 }}
               variant="contained"
               color="primary"
+              onClick={props.onCancel}
             >
               Cancel
             </Button>
@@ -125,6 +198,7 @@ const ImageUpload = (props) => {
               type="submit"
               variant="contained"
               color="primary"
+              onClick={handleUpload}
             >
               Submit
             </Button>

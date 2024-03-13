@@ -125,7 +125,7 @@ const Calendar = () => {
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
               }}
-              initialView="dayGridMonth"
+              initialView="timeGridWeek"
               editable={true}
               selectable={true}
               selectMirror={true}

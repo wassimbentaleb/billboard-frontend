@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
-
+import FAQ from "./scenes/faq";
 import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Calendar from "./scenes/calendar/calendar";
@@ -26,6 +26,7 @@ function App() {
              
               <Route path="/team" element={<Team />} />
               <Route path="/calendar" element={<Calendar />} />
+              <Route path="/faq" element={<FAQ />} />
             </Routes>
           </main>
         </div>
