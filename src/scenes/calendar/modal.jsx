@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import { Typography, TextField, Box, Card, Button,useTheme } from "@mui/material";
+import {
+  Typography,
+  TextField,
+  Box,
+  Card,
+  Button,
+  useTheme,
+} from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
 import * as yup from "yup";
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
+import {  toast } from "react-toastify";
 import dayjs from "dayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -21,7 +26,7 @@ import ImageListItemBar from "@mui/material/ImageListItemBar";
 import api from "../../api/api";
 import { Formik } from "formik";
 
-
+import { HandleAddPlan } from "../../services/service";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -42,16 +47,11 @@ const ImageUpload = (props) => {
   const [progress, setProgress] = useState({ stared: false, pc: 0 });
   const [imagePreview, setImagePreview] = useState([]);
 
-  const notify = (props) =>
+  const notify = () =>
     toast.success("Plan Created", {
       position: "bottom-left",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
+      autoClose: 3000,
+      theme: "dark",
     });
 
   const startDate = new Date(props.selected.startStr);
@@ -107,11 +107,12 @@ const ImageUpload = (props) => {
       });
   };
 
-  const handleFormSubmit = (values) => {
+  const handleFormSubmit = async (values) => {
     values.imageUrls = imagePreview;
     console.log(values);
-
-    // props.onCreated();
+    await HandleAddPlan(values);
+    notify();
+    props.onCancel();
   };
 
   return (
@@ -194,7 +195,13 @@ const ImageUpload = (props) => {
               value={values.Description}
               error={!!touched.Description && !!errors.Description}
             />
-             <Card style={{ overflowY: "scroll" ,height: "180px",backgroundColor:colors.blueAccent[900]}}>
+            <Card
+              style={{
+                overflowY: "scroll",
+                height: "180px",
+                backgroundColor: colors.blueAccent[900],
+              }}
+            >
               <ImageList sx={{ marginTop: "30px" }} cols={3}>
                 {imagePreview.map((item, index) => (
                   <ImageListItem
@@ -205,7 +212,7 @@ const ImageUpload = (props) => {
                   </ImageListItem>
                 ))}
               </ImageList>
-              </Card>
+            </Card>
             <Box
               sx={{ display: "flex", justifyContent: "center", margin: "20px" }}
             >
@@ -235,7 +242,6 @@ const ImageUpload = (props) => {
 
               <Box sx={{ display: "flex", justifyContent: "center" }}>
                 <Button
-                  onClick={notify}
                   sx={{ m: 1, width: 120 }}
                   variant="contained"
                   color="primary"
@@ -247,7 +253,6 @@ const ImageUpload = (props) => {
               </Box>
             </Box>
           </form>
-          <ToastContainer />
         </Card>
       )}
     </Formik>

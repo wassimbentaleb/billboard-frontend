@@ -8,7 +8,8 @@ import Calendar from "./scenes/calendar/calendar";
 import Team from "./scenes/team";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -17,6 +18,7 @@ function App() {
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
+      <ToastContainer />
         <CssBaseline />
         <div className="app">
           <Sidebar isSidebar={isSidebar} />

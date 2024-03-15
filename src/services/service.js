@@ -30,10 +30,10 @@ const signupAPI = async (paylaod) =>{
     return data;
   }
 
-  const mediaGetAPI = async () =>{
-    const {data} = await api.get("/media");
-    return data;
+  const HandleAddPlan = async (values) =>{
+    const res = await api.post("/HandleAddPlan", values);
+    return res.data;
   }
 
 
-  export { mediaGetAPI,signupAPI,signinAPI,clientsGetAPI,clientDeleteAPI,clientCreateAPI,clientUpdateAPI };
+  export { HandleAddPlan,signupAPI,signinAPI,clientsGetAPI,clientDeleteAPI,clientCreateAPI,clientUpdateAPI };
