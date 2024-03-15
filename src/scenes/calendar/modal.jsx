@@ -1,14 +1,27 @@
 import React, { useState } from "react";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import { Typography, TextField, Box, Card, Button ,CardMedia} from "@mui/material";
+import { Typography, TextField, Box, Card, Button,useTheme } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
-//import Card from '@mui/material/Card';
-//import CardContent from '@mui/material/CardContent';
+import * as yup from "yup";
 
-// Define a type for the form data
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import dayjs from "dayjs";
+import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { tokens } from "../../theme";
+import ImageList from "@mui/material/ImageList";
+import ImageListItem from "@mui/material/ImageListItem";
+import ImageListItemBar from "@mui/material/ImageListItemBar";
 
 import api from "../../api/api";
+import { Formik } from "formik";
+
+
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -23,41 +36,44 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 const ImageUpload = (props) => {
-  const [files, setFiles] = useState(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
   const [progress, setProgress] = useState({ stared: false, pc: 0 });
-  const [msg, setMsg] = useState(null);
-  const [imagePreview, setImagePreview] = useState();
+  const [imagePreview, setImagePreview] = useState([]);
 
-  const handleNameChange = (e) => {
-    setName(e.target.value);
+  const notify = (props) =>
+    toast.success("Plan Created", {
+      position: "bottom-left",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+
+  const startDate = new Date(props.selected.startStr);
+  const endDate = new Date(props.selected.endStr);
+
+  const initialValues = {
+    Title: "",
+    Description: "",
+    startTime: startDate,
+    endTime: endDate,
+    imageUrls: [],
   };
 
-  const handleDescriptionChange = (e) => {
-    setDescription(e.target.value);
-  };
+  const checkoutSchema = yup.object().shape({
+    Title: yup.string().required("required"),
+    Description: yup.string().required("required"),
+  });
 
-  const handleSubmit = (e) => {
-    console.log(name, description);
-  };
-
-  // Function to handle image preview
-  const handleImageChangee = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleImageChange = (e) => {
-    console.log(e.target.files);
-    setImagePreview(URL.createObjectURL(e.target.files[0]));
-  };
-
-  const handleUpload = async () => {
-    if (!files) {
-      setMsg("No file selected");
+  const handleUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length == 0) {
+      console.log("No file selected");
       return;
     }
 
@@ -66,10 +82,11 @@ const ImageUpload = (props) => {
       formData.append("files", files[i]);
     }
 
-    setMsg("Uploading...");
+    console.log("Uploading...");
     setProgress((prevState) => {
       return { ...prevState, stared: true };
     });
+
     await api
       .post("/handleFileUpload", formData, {
         onUploadProgress: (ProgressEvent) => {
@@ -80,177 +97,160 @@ const ImageUpload = (props) => {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then((res) => {
-        setMsg("Upload successfull");
+        console.log("Upload successfull");
         console.log(res);
+        setImagePreview(res.data.media);
       })
       .catch((err) => {
-        setMsg("Upload failed");
+        console.log("Upload failed");
         console.error(err);
       });
   };
 
-  /* const [imagePreview, setImagePreview] = useState();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const handleFormSubmit = (values) => {
+    values.imageUrls = imagePreview;
+    console.log(values);
 
-  const onSubmit = (data) => {
-    // Handle the form data
-    console.log(data);
+    // props.onCreated();
   };
 
-  // Function to handle image preview
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  // Validation rule for image files
-  const imageValidation = {
-    required: "An image file is required",
-    validate: (fileList) => {
-      if (fileList.length === 0) {
-        return "An image file is required";
-      }
-      const file = fileList[0];
-      /* const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml'];
-      if (!allowedTypes.includes(file.type)) {
-        return 'Invalid file type. Please select an image (jpeg, png, gif, svg, jpg).';
-      }
-      return true;
-    },
-  };
-   onSubmit={handleSubmit(onSubmit)}
-*/
   return (
-    <Card
-      sx={{
-        width: 600,
-        height: 500,
-        display: "flex",
-        justifyContent: "center",
-      }}
+    <Formik
+      onSubmit={handleFormSubmit}
+      initialValues={initialValues}
+      validationSchema={checkoutSchema}
     >
-      <form onSubmit={handleSubmit}>
-        <Typography
-          sx={{ margin: "20px", textAlign: "center" }}
-          variant="h5"
-          component="h2"
+      {({
+        values,
+        errors,
+        touched,
+        handleBlur,
+        handleChange,
+        handleSubmit,
+      }) => (
+        <Card
+          sx={{
+            width: 600,
+            height: 680,
+            display: "flex",
+            justifyContent: "center",
+          }}
         >
-          Add new liste to list of images
-        </Typography>
-
-        <TextField
-          sx={{ width: "100%", margin: "10px" }}
-          label="Name"
-          name="name"
-          helperText="Enter your full name"
-        />
-
-        <TextField
-          sx={{ width: "100%", margin: "10px" }}
-          label="Description"
-          name="description"
-          helperText="Enter a description"
-          multiline
-        />
-
-        <Box sx={{ display: "flex", justifyContent: "center", margin: "20px" }}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<CloudUploadIcon />}
-            component="label"
-            onChange={handleImageChange}
-          >
-            Upload image
-            <VisuallyHiddenInput type="file" multiple />
-          </Button>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "center",  }}>
-        {imagePreview && (
-          <Box sx={{ my: 2 }}>
-            <Card  sx={{ maxWidth:80,maxHeight:80 }}>
-              <CardMedia component="img" image={imagePreview} alt="Preview" />
-            </Card>
-          </Box>
-        )}
-        </Box>
-
-        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Button
-              sx={{ m: 1, width: 120 }}
-              variant="contained"
-              color="primary"
-              onClick={props.onCancel}
+          <form onSubmit={handleSubmit}>
+            <Typography
+              sx={{ marginTop: "20px", textAlign: "center" }}
+              variant="h2"
+              component="h5"
             >
-              Cancel
-            </Button>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Button
-              sx={{ m: 1, width: 120 }}
-              type="submit"
-              variant="contained"
-              color="primary"
-              onClick={handleUpload}
-            >
-              Submit
-            </Button>
-          </Box>
-        </Box>
-        {/* <Controller
-          name="image"
-          control={control}
-          rules={imageValidation}
-          defaultValue=""
-          render={({ field }) => (
+              Add new plan
+            </Typography>
+
             <TextField
-            label="Name"
-            name="name"
-            />,
-            <TextField
-              {...field}
-              type="file"
-              onChange={(e) => {
-                field.onChange(e);
-                handleImageChange(e);
-              }}
-              InputLabelProps={{ shrink: true }}
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              error={!!errors.image}
-              helperText={errors.image ? errors.image.message : ""}
+              sx={{ width: "100%", marginTop: "30px" }}
+              label="Title"
+              name="Title"
+              helperText="Enter your title"
+              onBlur={handleBlur}
+              onChange={handleChange}
+              value={values.Title}
+              error={!!touched.Title && !!errors.Title}
             />
-          )}
-        />
-        {imagePreview && (
-          <Box sx={{ my: 2 }}>
-            <Card  sx={{ maxWidth: 200 }}>
-              <CardMedia component="img" image={imagePreview} alt="Preview" />
-            </Card>
-          </Box>
-        )}
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<CloudUploadIcon />}
-          type="submit"
-          sx={{ mt: 2 }}
-        >
-          Upload
-        </Button>
-        <Button onClick={props.onCancel}>
-            Cancel
-        </Button> */}
-      </form>
-    </Card>
+            <Box marginTop={"20px"}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DemoContainer components={["TimePicker", "TimePicker"]}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <TimePicker
+                      name="startTime"
+                      label="Start Time"
+                      value={values.startTime}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                    />
+                    <TimePicker
+                      name="endTime"
+                      label="End Time"
+                      value={values.endTime}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                    />
+                  </Box>
+                </DemoContainer>
+              </LocalizationProvider>
+            </Box>
+            <TextField
+              sx={{ width: "100%", marginTop: "30px" }}
+              label="Description"
+              name="Description"
+              helperText="Enter a description"
+              rows={2}
+              multiline
+              onBlur={handleBlur}
+              onChange={handleChange}
+              value={values.Description}
+              error={!!touched.Description && !!errors.Description}
+            />
+             <Card style={{ overflowY: "scroll" ,height: "180px",backgroundColor:colors.blueAccent[900]}}>
+              <ImageList sx={{ marginTop: "30px" }} cols={3}>
+                {imagePreview.map((item, index) => (
+                  <ImageListItem
+                    key={index}
+                    sx={{ width: "100px", height: "100px" }}
+                  >
+                    <img src={item} alt="Image" loading="lazy" />
+                  </ImageListItem>
+                ))}
+              </ImageList>
+              </Card>
+            <Box
+              sx={{ display: "flex", justifyContent: "center", margin: "20px" }}
+            >
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<CloudUploadIcon />}
+                component="label"
+                onChange={handleUpload}
+              >
+                Add Image
+                <VisuallyHiddenInput type="file" multiple />
+              </Button>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Button
+                  sx={{ m: 1, width: 120 }}
+                  variant="contained"
+                  color="primary"
+                  onClick={props.onCancel}
+                >
+                  Cancel
+                </Button>
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Button
+                  onClick={notify}
+                  sx={{ m: 1, width: 120 }}
+                  variant="contained"
+                  color="primary"
+                  type="submit"
+                  onBlur={handleBlur}
+                >
+                  Create
+                </Button>
+              </Box>
+            </Box>
+          </form>
+          <ToastContainer />
+        </Card>
+      )}
+    </Formik>
   );
 };
 

@@ -30,5 +30,10 @@ const signupAPI = async (paylaod) =>{
     return data;
   }
 
+  const mediaGetAPI = async () =>{
+    const {data} = await api.get("/media");
+    return data;
+  }
 
-  export { signupAPI,signinAPI,clientsGetAPI,clientDeleteAPI,clientCreateAPI,clientUpdateAPI };
+
+  export { mediaGetAPI,signupAPI,signinAPI,clientsGetAPI,clientDeleteAPI,clientCreateAPI,clientUpdateAPI };
